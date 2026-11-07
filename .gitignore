@@ -1,0 +1,12 @@
+# Bytecode compilado
+bin/
+*.class
+
+# Configurações locais de IDE
+.vscode/
+.obsidian/
+.idea/
+*.iml
+
+# Material de apoio do grupo, fora da entrega
+docs/roteiro-video.md
