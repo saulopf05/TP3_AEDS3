@@ -1,6 +1,6 @@
-# AJUDA AÍ — Trabalho Prático 2 de AEDs III
+# AJUDA AÍ — Trabalho Prático 3 de AEDs III
 
-Sistema de perguntas e respostas em interface textual, desenvolvido em Java para a disciplina de Algoritmos e Estruturas de Dados III (AEDs III). Este relatório documenta as funcionalidades trabalhadas para o TP2: listagem paginada das perguntas mais recentes, consulta de respostas ordenadas por avaliação e votação.
+Sistema de perguntas e respostas em interface textual, desenvolvido em Java para a disciplina de Algoritmos e Estruturas de Dados III (AEDs III). Este relatório documenta o TP3: a construção do **índice invertido** com as palavras-chave das perguntas e a **busca de perguntas por palavras-chave**, com os resultados classificados pelo modelo **TF×IDF**.
 
 ---
 
@@ -19,7 +19,11 @@ Sistema de perguntas e respostas em interface textual, desenvolvido em Java para
 
 **Link do vídeo:**  
 
-**Descrição:**  
+**Descrição:** o vídeo (até 5 minutos) mostra:
+
+1. a busca de perguntas usando mais de uma palavra-chave;
+2. a busca de uma pergunta antes e depois da alteração das suas palavras-chave;
+3. o código responsável pelo ranking das perguntas (método `buscar()` da classe `busca.IndiceInvertido`), comprovando o uso do modelo TF×IDF.
 
 ---
 
@@ -47,28 +51,36 @@ Os arquivos de dados e índices são criados na pasta `dados/`, relativa ao dire
 
 ## 4. O que o sistema faz
 
-O **AJUDA AÍ** é um sistema textual de perguntas e respostas. Nesta etapa do trabalho, o foco está na consulta das perguntas mais recentes, na visualização das respostas e na avaliação desses conteúdos por meio de votos.
+O **AJUDA AÍ** é um fórum textual de perguntas e respostas. Depois de criar uma conta e fazer login, o usuário pode:
 
-O fluxo implementado para o TP2 é:
+- **gerenciar os próprios dados** (nome, e-mail, senha e pergunta de recuperação de senha);
+- **gerenciar as próprias perguntas**: listar, incluir, alterar (texto e palavras-chave) e arquivar;
+- **consultar as perguntas mais recentes**, cinco por página, e abrir os detalhes de cada uma;
+- **responder perguntas** e consultar as respostas ordenadas pela nota;
+- **votar** (`+1` ou `-1`) em perguntas e respostas de outros usuários, sem voto duplicado e sem voto no próprio conteúdo;
+- **buscar perguntas por palavras-chave** *(TP3)*.
 
-1. **Perguntas mais recentes** — apresenta as perguntas ativas em ordem decrescente de data de criação.
-2. **Paginação** — exibe cinco perguntas por página e permite avançar ou voltar respeitando os limites da listagem.
-3. **Detalhes da pergunta** — permite abrir a pergunta selecionada e consultar suas informações.
-4. **Respostas** — apresenta as respostas vinculadas à pergunta, com autor, data, nota e quantidade de avaliações, ordenadas da maior nota para a menor.
-5. **Votação** — permite atribuir voto positivo (`+1`) ou negativo (`-1`), atualizando a nota e a quantidade de avaliações. O sistema bloqueia voto no próprio conteúdo e voto duplicado do mesmo usuário no mesmo conteúdo.
+### 4.1. Busca por palavras-chave (TP3)
+
+Toda pergunta tem um campo de palavras-chave (por exemplo, `Java; árvore B+; índice`). Essas palavras são transformadas em termos e guardadas em um índice invertido. Cada termo aponta para a lista das perguntas que o contêm, junto com a frequência do termo em cada uma delas (TF).
+
+No menu **Início > Buscar perguntas > (B) Busca por palavras-chave**, o usuário digita um ou mais termos. O sistema aplica aos termos digitados o mesmo tratamento dado às palavras-chave, consulta a lista de cada termo e calcula a relevância de cada pergunta pelo modelo TF×IDF. As perguntas são então apresentadas da mais relevante para a menos relevante, de 10 em 10, e qualquer uma delas pode ser aberta para ver detalhes, respostas e votar.
+
+O índice é mantido sempre atualizado: ele muda quando uma pergunta é incluída, quando suas palavras-chave são alteradas e quando ela é arquivada ou excluída.
 
 ---
 
 ## 5. Organização do projeto
 
 ```text
-TP2_AEDS3/
+TP3_AEDS3/
 ├── src/
 │   ├── Principal.java              ponto de entrada
-│   ├── aed3/                       estruturas-base fornecidas para o projeto
+│   ├── aed3/                       estruturas-base fornecidas pelo professor
+│   ├── busca/                      tratamento de termos e índice invertido (TP3)
 │   ├── entidades/                  entidades gravadas em arquivo
 │   ├── arquivos/                   CRUDs e índices associados
-│   ├── indices/                    pares chave-valor usados nos índices
+│   ├── indices/                    pares chave-valor usados nas Árvores B+ e Hash
 │   └── menus/                      menus e interface textual
 ├── dados/                          arquivos de registros e índices
 ├── docs/img/                       capturas de tela
@@ -78,211 +90,279 @@ TP2_AEDS3/
 
 ### 5.1. Classes criadas pelo grupo
 
+As classes criadas ou alteradas no TP3 estão marcadas com **(TP3)**.
+
 | Classe | Pacote | O que faz |
 |---|---|---|
+| `ProcessadorTermos` **(TP3)** | `busca` | Transforma um texto no vetor de termos: minúsculas, sem acentos, separado em palavras e sem stop words e numerais. É usada tanto na indexação quanto na consulta. |
+| `IndiceInvertido` **(TP3)** | `busca` | Índice invertido construído sobre a `ListaInvertida`. Insere e remove perguntas (gravando o TF de cada termo) e faz a busca com ranking TF×IDF. |
+| `ArquivoPergunta` **(TP3)** | `arquivos` | CRUD de perguntas, índice cronológico e, no TP3, a manutenção do índice invertido das palavras-chave em `create`, `update` e `delete`, além do método `buscarPorPalavrasChave()`. |
+| `MenuUsuario` **(TP3)** | `menus` | Menus do usuário. No TP3 ganhou a tela de busca por palavras-chave, com paginação de 10 em 10 e exibição do valor TF×IDF. |
 | `Principal` | *(default)* | Ponto de entrada da aplicação. |
 | `Usuario` | `entidades` | Entidade que representa um usuário. |
-| `Pergunta` | `entidades` | Entidade pergunta, incluindo autor, conteúdo, datas, nota e status. |
+| `Pergunta` | `entidades` | Entidade pergunta: autor, texto, palavras-chave, datas, nota e status. |
 | `Resposta` | `entidades` | Entidade resposta vinculada a uma pergunta e a um usuário, com nota. |
 | `Voto` | `entidades` | Entidade que registra o voto de um usuário em um conteúdo. |
-| `ArquivoUsuario` | `arquivos` | CRUD de usuários e índices associados. |
-| `ArquivoPergunta` | `arquivos` | CRUD de perguntas e índice cronológico utilizado para listar as perguntas mais recentes. |
+| `ArquivoUsuario` | `arquivos` | CRUD de usuários e índice de e-mail. |
 | `ArquivoResposta` | `arquivos` | CRUD de respostas e índice de relacionamento entre pergunta e respostas. |
 | `ArquivoVoto` | `arquivos` | CRUD de votos e índice de relacionamento entre usuário e votos. |
 | `ParEmailID` | `indices` | Par `(email; idUsuario)` utilizado no índice de e-mail. |
-| `ParUsuarioPergunta` | `indices` | Par `(idUsuario; idPergunta)` utilizado no relacionamento entre usuários e perguntas. |
-| `ParPerguntaResposta` | `indices` | Par `(idPergunta; idResposta)` utilizado no relacionamento entre perguntas e respostas. |
-| `ParUsuarioVoto` | `indices` | Par `(idUsuario; idVoto)` utilizado no relacionamento entre usuários e votos. |
-| `ParDataPergunta` | `indices` | Chave do índice cronológico usado para consultar perguntas por data de criação. |
-| `MenuAcesso` | `menus` | Interface textual de acesso ao sistema. |
-| `MenuUsuario` | `menus` | Menus e operações relacionadas ao usuário, incluindo a consulta de perguntas recentes. |
-| `MenuPerguntas` | `menus` | Operações de gerenciamento de perguntas. |
+| `ParUsuarioPergunta` | `indices` | Par `(idUsuario; idPergunta)` do relacionamento entre usuários e perguntas. |
+| `ParPerguntaResposta` | `indices` | Par `(idPergunta; idResposta)` do relacionamento entre perguntas e respostas. |
+| `ParUsuarioVoto` | `indices` | Par `(idUsuario; idVoto)` do relacionamento entre usuários e votos. |
+| `ParDataPergunta` | `indices` | Chave do índice cronológico das perguntas. |
+| `MenuAcesso` | `menus` | Login, cadastro e recuperação de senha. |
+| `MenuPerguntas` | `menus` | Gerenciamento das perguntas do usuário. |
 | `MenuResposta` | `menus` | Exibição de respostas e fluxo de votação. |
-| `Console` | `menus` | Centraliza a leitura da entrada de teclado, compartilhada pelos menus. |
-| `Formato` | `menus` | Converte datas e horários das entidades para formato legível. |
+| `Console` | `menus` | Entrada de teclado compartilhada pelos menus. |
+| `Formato` | `menus` | Converte datas e horários para formato legível. |
 
 ### 5.2. Classes fornecidas pelo professor (pacote `aed3`)
 
-O projeto utiliza as estruturas-base do pacote `aed3`, incluindo o CRUD genérico, a Tabela Hash Extensível e a Árvore B+. Essas estruturas dão suporte ao armazenamento dos registros e à manutenção dos índices utilizados pela aplicação.
+| Classe | Uso no projeto |
+|---|---|
+| `ListaInvertida` e `ElementoLista` **(TP3)** | Base do índice invertido das palavras-chave. Foram incluídas sem alterações. |
+| `Arquivo` | CRUD genérico com índice direto. |
+| `HashExtensivel`, `RegistroHashExtensivel`, `ParIDEndereco` | Índice direto e índice de e-mail. |
+| `ArvoreBMais`, `InterfaceArvoreBMais` | Índices de relacionamento e índice cronológico. |
+| `Registro` | Interface das entidades. |
 
 ---
 
 ## 6. Estrutura dos arquivos e dos índices
 
-Os registros são armazenados em arquivos próprios, utilizando a estrutura do CRUD genérico. Os índices permitem localizar registros e percorrer os relacionamentos necessários para as consultas.
-
 | Arquivo | Índice direto | Índice indireto / relacionamento |
 |---|---|---|
-| `dados/usuarios/usuarios.db` | Tabela Hash Extensível: `idUsuario` → endereço | Hash Extensível: `email` → `idUsuario` |
-| `dados/perguntas/perguntas.db` | Tabela Hash Extensível: `idPergunta` → endereço | Árvore B+: `(idUsuario; idPergunta)` |
-| `dados/perguntas/` | — | Índice cronológico em Árvore B+ para ordenar perguntas pela data de criação |
-| `dados/respostas/respostas.db` | Tabela Hash Extensível: `idResposta` → endereço | Árvore B+: `(idPergunta; idResposta)` |
-| `dados/votos/votos.db` | Tabela Hash Extensível: `idVoto` → endereço | Árvore B+: `(idUsuario; idVoto)` |
+| `dados/usuarios/usuarios.db` | Hash Extensível: `idUsuario` → endereço | Hash Extensível: `email` → `idUsuario` |
+| `dados/perguntas/perguntas.db` | Hash Extensível: `idPergunta` → endereço | Árvore B+: `(idUsuario; idPergunta)` e Árvore B+ cronológica `(criação; idPergunta)` |
+| `dados/perguntas/indicePalavrasChave.dic.db` e `.blocos.db` **(TP3)** | — | Lista invertida: `termo` → `[(idPergunta; TF), ...]`, mais o total de perguntas indexadas |
+| `dados/respostas/respostas.db` | Hash Extensível: `idResposta` → endereço | Árvore B+: `(idPergunta; idResposta)` |
+| `dados/votos/votos.db` | Hash Extensível: `idVoto` → endereço | Árvore B+: `(idUsuario; idVoto)` |
 
-O índice cronológico permite consultar as perguntas da mais recente para a mais antiga sem depender da ordem física em que os registros estão gravados no arquivo. A listagem também considera a situação ativa da pergunta.
+No índice invertido, o arquivo de **dicionário** guarda, no cabeçalho, o número de perguntas indexadas (`numeroEntidades()`) e, em seguida, cada termo com o endereço do seu primeiro bloco. O arquivo de **blocos** guarda os pares `(idPergunta; TF)`, cinco por bloco, com encadeamento para blocos seguintes quando a lista cresce.
 
 ---
 
 ## 7. Telas do sistema
 
-As capturas de tela serão inseridas posteriormente. Os espaços abaixo foram mantidos para preservar a estrutura do relatório.
+As telas abaixo são a saída real do programa em um teste com as quatro perguntas do exemplo do enunciado, cadastradas junto com outras seis perguntas já existentes (10 perguntas ativas no total).
 
-### 7.1. Listagem das perguntas mais recentes
+### 7.1. Busca com mais de uma palavra-chave
 
-**Captura de tela:**  
+```text
+Busca por palavras-chave
+------------------------
+Palavras-chave (vazio para cancelar): Inteligência Artificial
+Termos considerados: inteligencia, artificial
 
-**Descrição:**  
+Resultados — página 1 de 1 (3 pergunta(s) encontrada(s))
+----------------------------------------
 
-### 7.2. Navegação entre páginas
+(1) 08/11/2026 19:19 | Relevância (TF x IDF): 0,407
+O que é IA?
+Autor: Usuario Teste
+Palavras-chave: Introdução à Inteligência Artificial
 
-**Captura de tela:**  
+(2) 08/11/2026 19:19 | Relevância (TF x IDF): 0,349
+IA no trabalho?
+Autor: Usuario Teste
+Palavras-chave: Inteligência no Trabalho por Meio da Inteligência Artificial
 
-**Descrição:**  
+(3) 08/11/2026 19:19 | Relevância (TF x IDF): 0,174
+Como controlar emoções?
+Autor: Usuario Teste
+Palavras-chave: Inteligência Emocional para Gestores
 
-### 7.3. Limites da paginação
+N - Próxima página | P - Página anterior | R - Voltar
+Selecione o número da pergunta ou uma opção:
+```
 
-**Captura de tela:**  
+A pergunta "Como gerir equipes?" (palavras-chave `Introdução à Gestão de Equipes`) não aparece, porque não tem nenhum dos termos buscados.
 
-**Descrição:**  
+### 7.2. Alteração das palavras-chave e nova busca
 
-### 7.4. Detalhes de uma pergunta selecionada
+A pergunta "Como gerir equipes?" teve as palavras-chave alteradas para `Inteligência Artificial para Gestão`, e a pergunta "Como controlar emoções?" foi arquivada:
 
-**Captura de tela:**  
+```text
+Alterar pergunta
+----------------
+Digite o número da pergunta que deseja alterar (0 para cancelar): 4
 
-**Descrição:**  
+Pergunta atual: Como gerir equipes?
+Nova pergunta (deixe vazio para não alterar):
+Palavras-chave atuais: Introdução à Gestão de Equipes
+Novas palavras-chave (deixe vazio para não alterar): Inteligência Artificial para Gestão
 
-### 7.5. Listagem das respostas de uma pergunta
+Pergunta alterada com sucesso!
+```
 
-**Captura de tela:**  
+Repetindo a mesma busca, a pergunta alterada passa a ser encontrada e a pergunta arquivada sai dos resultados. Os valores mudam porque agora são 9 perguntas ativas e os termos aparecem em 3 delas:
 
-**Descrição:**  
+```text
+Resultados — página 1 de 1 (3 pergunta(s) encontrada(s))
+----------------------------------------
 
-### 7.6. Respostas ordenadas por nota
+(1) 08/11/2026 19:19 | Relevância (TF x IDF): 0,318
+O que é IA?
+Autor: Usuario Teste
+Palavras-chave: Introdução à Inteligência Artificial
 
-**Captura de tela:**  
+(2) 08/11/2026 19:19 | Relevância (TF x IDF): 0,318
+Como gerir equipes?
+Autor: Usuario Teste
+Palavras-chave: Inteligência Artificial para Gestão
 
-**Descrição:**  
+(3) 08/11/2026 19:19 | Relevância (TF x IDF): 0,286
+IA no trabalho?
+Autor: Usuario Teste
+Palavras-chave: Inteligência no Trabalho por Meio da Inteligência Artificial
+```
 
-### 7.7. Voto positivo
+### 7.3. Busca apenas com stop words
 
-**Captura de tela:**  
+```text
+Palavras-chave (vazio para cancelar): de para com 2
 
-**Descrição:**  
-
-### 7.8. Voto negativo
-
-**Captura de tela:**  
-
-**Descrição:**  
-
-### 7.9. Bloqueio de voto duplicado
-
-**Captura de tela:**  
-
-**Descrição:**  
-
-### 7.10. Bloqueio de voto no próprio conteúdo
-
-**Captura de tela:**  
-
-**Descrição:**  
-
-### 7.11. Persistência após reiniciar o sistema
-
-**Captura de tela:**  
-
-**Descrição:**  
+Nenhum termo válido na busca (apenas stop words ou números).
+```
 
 ---
 
 ## 8. Operações especiais implementadas
 
-### 8.1. Índice cronológico das perguntas
+### 8.1. Tratamento dos termos (`busca.ProcessadorTermos`)
 
-Foi acrescentado um índice baseado na data de criação das perguntas, permitindo percorrer os registros da data mais recente para a mais antiga. A chave do índice é representada pela classe `ParDataPergunta`, utilizada pela `ArquivoPergunta`.
+O mesmo tratamento é aplicado às palavras-chave cadastradas e aos termos digitados na busca:
 
-O índice é atualizado quando novas perguntas são criadas. Para permitir a consulta de registros que já existiam antes da criação do índice, a implementação também contempla o preenchimento do índice a partir das perguntas armazenadas.
+1. o texto é passado para letras minúsculas;
+2. acentos e cedilha são removidos com `java.text.Normalizer` (decomposição NFD e remoção das marcas diacríticas);
+3. o texto é quebrado em palavras: qualquer caractere que não seja letra ou dígito separa termos, inclusive o `;` usado entre as palavras-chave;
+4. as **stop words** e os **numerais** são descartados.
 
-### 8.2. Paginação das perguntas mais recentes
+Exemplo: `"Inteligência no Trabalho por Meio da Inteligência Artificial"` → `[inteligencia, trabalho, meio, inteligencia, artificial]`.
 
-A listagem apresenta cinco perguntas por página. A navegação permite avançar para a página seguinte ou retornar à anterior, sem ultrapassar o início ou o fim dos resultados disponíveis.
+A lista de stop words parte das palavras vazias usuais do português (artigos, preposições, contrações, pronomes, conjunções, advérbios e verbos auxiliares muito frequentes e numerais por extenso). Ela foi **adaptada ao domínio** do AJUDA AÍ com palavras comuns em fóruns de perguntas que não ajudam a diferenciar uma pergunta da outra, como `pergunta`, `duvida`, `ajuda`, `alguem`, `pessoal`, `obrigado` e `ola`. Números escritos com dígitos (`2`, `2024`) também são descartados, por serem numerais.
 
-A ordem da listagem é decrescente por data de criação. Ao selecionar uma pergunta, o sistema abre os detalhes correspondentes.
+### 8.2. Construção do índice invertido (`busca.IndiceInvertido.inserir`)
 
-### 8.3. Exibição dos detalhes da pergunta
+Para cada pergunta, calcula-se o vetor de termos e cada ocorrência vale `1/n`, sendo `n` o total de termos válidos. Como a `ListaInvertida` não aceita o mesmo id duas vezes na lista de um termo, o código segue o que o enunciado pede:
 
-A tela de detalhes apresenta as informações disponíveis da pergunta selecionada, incluindo autor, conteúdo, palavras-chave, nota, data de criação, data de alteração e status.
+```java
+ElementoLista e = lista.read(termo, id);
+if (e == null)
+    lista.create(termo, new ElementoLista(id, frequencia));
+else
+    lista.update(termo, new ElementoLista(id, frequencia + e.getFrequencia()));
+```
 
-### 8.4. Listagem de respostas por avaliação
+Ao fim da inserção, `incrementaEntidades()` registra mais uma pergunta, valor que é usado no cálculo do IDF. Com os quatro livros do enunciado, o índice gerado pelo sistema é exatamente o esperado (valores arredondados para três casas):
 
-As respostas associadas à pergunta selecionada são apresentadas em ordem decrescente de nota. A listagem exibe informações como autor, data, nota acumulada e quantidade de avaliações.
+```text
+introducao: (1;0.333) (4;0.333)
+inteligencia: (1;0.333) (2;0.333) (3;0.4)
+artificial: (1;0.333) (3;0.2)
+emocional: (2;0.333)
+gestores: (2;0.333)
+trabalho: (3;0.2)
+meio: (3;0.2)
+gestao: (4;0.333)
+equipes: (4;0.333)
+```
 
-### 8.5. Votação positiva e negativa
+### 8.3. Atualização do índice (`arquivos.ArquivoPergunta`)
 
-O sistema registra votos positivos (`+1`) e negativos (`-1`). O voto é armazenado como um registro próprio e a nota acumulada do conteúdo, assim como a quantidade de avaliações, é atualizada.
+O índice é mantido pelo próprio CRUD de perguntas, então nenhum menu precisa se preocupar com ele:
 
-### 8.6. Validações de votação
+| Operação | Efeito no índice invertido |
+|---|---|
+| `create` | Insere os termos da nova pergunta e incrementa o total de perguntas. |
+| `update` com palavras-chave alteradas | Remove o id da lista de cada termo antigo, decrementa o total e insere os termos novos, incrementando-o de novo. |
+| `update` que arquiva a pergunta | Remove a pergunta do índice e decrementa o total. Perguntas arquivadas não aparecem na busca nem contam no IDF. |
+| `update` sem mudança de palavras-chave ou de status (um voto, por exemplo) | Não altera o índice. |
+| `delete` | Remove a pergunta do índice e decrementa o total. |
 
-Antes de aceitar um voto, o sistema verifica as regras de votação implementadas:
+Se os arquivos do índice ainda não existirem, como na primeira execução do TP3 com a pasta `dados/` dos trabalhos anteriores, o índice é construído automaticamente a partir das perguntas ativas já gravadas.
 
-- um usuário não pode votar no próprio conteúdo;
-- o mesmo usuário não pode votar mais de uma vez no mesmo conteúdo.
+### 8.4. Busca e ranking TF×IDF (`busca.IndiceInvertido.buscar`)
 
-A validação utiliza os registros e índices de votos para identificar se já existe um voto daquele usuário no conteúdo avaliado.
+Este é o código responsável pelo ranking das perguntas:
 
-### 8.7. Persistência dos registros e índices
+```java
+for (String termo : termos) {
+    ElementoLista[] ocorrencias = lista.read(termo);
+    if (ocorrencias.length == 0)
+        continue;
 
-Os dados e índices são armazenados em arquivos na pasta `dados/`. Após encerrar e iniciar novamente a aplicação, os registros persistidos continuam disponíveis. A pasta `dados/` deve ser preservada quando se deseja manter os dados de teste.
+    double idf = Math.log10((double) totalEntidades / ocorrencias.length);
+    for (ElementoLista e : ocorrencias)
+        pontuacao.merge(e.getId(), e.getFrequencia() * idf, Double::sum);
+}
+```
+
+Para cada termo da consulta:
+
+- **IDF** = `log10(N / df)`, sendo `N` o total de perguntas indexadas (`numeroEntidades()`) e `df` o tamanho da lista do termo;
+- cada par `(id; TF)` da lista contribui com **TF × IDF** para a pergunta `id`;
+- as contribuições de uma mesma pergunta são somadas, e o resultado é ordenado do maior para o menor valor.
+
+Com os quatro livros do enunciado e a consulta `"Inteligência Artificial"`, o sistema produz `[(1; 0.142), (3; 0.110), (2; 0.042)]`, isto é, a ordem `[1, 3, 2]`, exatamente como no exemplo do enunciado.
+
+Detalhes adotados:
+
+- termos repetidos na consulta (`"java java"`) contam uma única vez;
+- em caso de empate no valor TF×IDF, a pergunta de menor id aparece primeiro;
+- uma pergunta que contém um termo presente em **todas** as perguntas aparece no resultado, mas com valor 0 para esse termo (`log10(1) = 0`).
+
+### 8.5. Apresentação dos resultados (`menus.MenuUsuario.buscarPorPalavrasChave`)
+
+A tela de busca mostra os termos que foram considerados após o tratamento, o total de perguntas encontradas e os resultados de **10 em 10**, com a posição no ranking e o valor TF×IDF de cada pergunta. É possível avançar e voltar páginas, sem ultrapassar os limites, e abrir qualquer pergunta para ver detalhes, respostas e votar. Ao sair dos detalhes, o usuário volta para a mesma página de resultados.
+
+### 8.6. Funcionalidades das etapas anteriores
+
+Continuam disponíveis a listagem paginada das perguntas mais recentes (índice cronológico em Árvore B+), as respostas ordenadas por nota e a votação positiva/negativa com bloqueio de voto duplicado e de voto no próprio conteúdo. A tela de detalhes da pergunta passou a ser compartilhada entre a listagem das recentes e a busca por palavras-chave.
 
 ---
 
 ## 9. Checklist
 
-> **A listagem de perguntas mais recentes está implementada?**
+> **O índice invertido com palavras-chave foi criado usando a classe ListaInvertida?**
 
-**Sim.** As perguntas ativas são apresentadas em ordem decrescente de data de criação, com cinco registros por página. A navegação entre páginas respeita os limites da listagem.
+**Sim.** A classe `busca.IndiceInvertido` usa a `aed3.ListaInvertida` fornecida pelo professor, sem alterações, para guardar os pares `(idPergunta; TF)` de cada termo das palavras-chave. Ela também usa os métodos `incrementaEntidades()`, `decrementaEntidades()` e `numeroEntidades()` para manter o total de perguntas usado no IDF.
 
-> **É possível navegar entre as páginas sem ultrapassar os limites?**
+> **É possível buscar perguntas por palavras-chave no menu de buscar perguntas?**
 
-**Sim.** A aplicação permite avançar e voltar entre as páginas disponíveis e impede a navegação para antes da primeira página ou depois da última.
+**Sim.** Em **Início > Buscar perguntas > (B) Busca por palavras-chave**.
 
-> **É possível abrir os detalhes de uma pergunta selecionada?**
+> **As perguntas retornadas estão corretamente classificadas pelo modelo TFxIDF?**
 
-**Sim.** A seleção de uma pergunta abre a tela de detalhes com as informações disponíveis do registro.
+**Sim.** A relevância de cada pergunta é a soma de TF × log10(N/df) dos termos buscados, e os resultados são ordenados do maior para o menor valor. Reproduzindo o exemplo do enunciado, o sistema chegou às mesmas listas invertidas e ao mesmo ranking `[(1; 0.142), (3; 0.110), (2; 0.042)]`.
 
-> **As respostas são apresentadas em ordem decrescente de nota?**
+> **O trabalho compila corretamente?**
 
-**Sim.** A listagem de respostas exibe primeiro as respostas com maior nota, mostrando autor, data, nota e quantidade de avaliações.
+**Sim.** O projeto compila sem erros nem avisos com `javac -encoding UTF-8 -d bin $(find src -name "*.java")` (testado com o JDK 21).
 
-> **A votação positiva e negativa atualiza a nota e a quantidade de avaliações?**
+> **O trabalho está completo e funcionando sem erros de execução?**
 
-**Sim.** Os votos positivos e negativos são registrados, e a nota e a quantidade de avaliações são atualizadas conforme o voto realizado.
+**Sim.** Todas as operações pedidas foram implementadas e testadas (ver a tabela abaixo), sem erros de execução.
 
-> **O sistema impede voto duplicado e voto no próprio conteúdo?**
+> **O trabalho é original e não a cópia de um trabalho de outro grupo?**
 
-**Sim.** As validações bloqueiam um segundo voto do mesmo usuário no mesmo conteúdo e impedem que o autor vote no próprio conteúdo.
-
-> **Os dados continuam disponíveis depois de reiniciar a aplicação?**
-
-**Sim.** Nos testes funcionais realizados, os registros e índices permaneceram disponíveis após reiniciar o sistema. A pasta `dados/` contém os arquivos persistidos.
-
-> **O trabalho compila e executa?**
-
-**Sim.** A implementação foi compilada e executada durante os testes funcionais realizados pelo grupo.
+*(a ser respondido pelo grupo)*
 
 ### 9.1. Resumo dos testes funcionais
 
 | Teste | Resultado observado |
 |---|---|
-| Listagem com cinco perguntas por página | Funcionou |
-| Ordenação das perguntas da mais recente para a mais antiga | Funcionou |
-| Navegação para a página seguinte e retorno à anterior | Funcionou |
-| Bloqueio de navegação antes da primeira e depois da última página | Funcionou |
-| Abertura dos detalhes da pergunta selecionada | Funcionou |
-| Exibição de autor, data, nota e quantidade de avaliações das respostas | Funcionou |
-| Ordenação das respostas por nota decrescente | Funcionou |
-| Voto positivo e atualização da nota/quantidade | Funcionou |
-| Voto negativo e atualização da nota/quantidade | Funcionou |
-| Bloqueio de voto duplicado | Funcionou |
-| Persistência após reiniciar a aplicação | Funcionou |
-| Inclusão de nova pergunta e exibição na listagem de recentes | Funcionou |
+| Listas invertidas do exemplo do enunciado (4 livros) | Iguais às do enunciado |
+| Ranking da consulta "Inteligência Artificial" no exemplo do enunciado | `[1, 3, 2]`, com os mesmos valores |
+| Construção do índice a partir das perguntas já existentes em `dados/` | Funcionou (perguntas arquivadas ficam de fora) |
+| Inclusão de pergunta e busca pelas suas palavras-chave | Funcionou |
+| Busca com mais de uma palavra-chave | Funcionou |
+| Alteração das palavras-chave: termos antigos deixam de encontrar a pergunta e os novos passam a encontrar | Funcionou |
+| Arquivamento: pergunta deixa de aparecer na busca e o total de perguntas do IDF diminui | Funcionou |
+| Voto em pergunta não altera o índice | Funcionou |
+| Busca só com stop words / números | Mensagem de nenhum termo válido |
+| Busca sem resultados | Mensagem de nenhuma pergunta encontrada |
+| Paginação de 10 em 10 com 12 resultados, incluindo os limites da primeira e da última página | Funcionou |
+| Abertura dos detalhes de uma pergunta a partir da busca | Funcionou |
+| Persistência do índice após reiniciar a aplicação | Funcionou |
