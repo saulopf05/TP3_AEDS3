@@ -1,12 +1,16 @@
 package menus;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Scanner;
 
+import aed3.ElementoLista;
 import arquivos.ArquivoPergunta;
 import arquivos.ArquivoResposta;
 import arquivos.ArquivoUsuario;
 import arquivos.ArquivoVoto;
+import busca.ProcessadorTermos;
 import entidades.Pergunta;
 import entidades.Resposta;
 import entidades.Usuario;
@@ -16,6 +20,8 @@ import indices.ParUsuarioPergunta;
 import indices.ParUsuarioVoto;
 
 public class MenuUsuario {
+    private static final int RESULTADOS_POR_PAGINA = 10;
+
     private static Scanner console = Console.entrada();
     private Usuario usuario;
     private ArquivoUsuario arqUsuarios;
@@ -93,9 +99,7 @@ public class MenuUsuario {
                     break;
 
                 case 'B':
-                    System.out.println(
-                        "\nA busca por palavras-chave ainda não foi implementada."
-                    );
+                    buscarPorPalavrasChave();
                     break;
 
                 case 'R':
@@ -168,6 +172,94 @@ public class MenuUsuario {
             System.out.println("\nNúmero inválido! Digite apenas números.");
         } catch (Exception e) {
             System.out.println("\nErro ao buscar perguntas!");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Busca de perguntas pelas palavras-chave, usando o índice invertido.
+     *
+     * Os termos digitados passam pelo mesmo tratamento das palavras-chave
+     * cadastradas (minúsculas, sem acentos e sem stop words). As perguntas
+     * encontradas são apresentadas de 10 em 10, ordenadas pelo valor TF x IDF
+     * calculado em busca.IndiceInvertido.buscar().
+     */
+    private void buscarPorPalavrasChave() {
+        try {
+            System.out.println("\nBusca por palavras-chave");
+            System.out.println("------------------------");
+            System.out.print("Palavras-chave (vazio para cancelar): ");
+            String consulta = console.nextLine().trim();
+            if (consulta.isEmpty())
+                return;
+
+            List<String> termos = ProcessadorTermos.extrairTermos(consulta);
+            if (termos.isEmpty()) {
+                System.out.println("\nNenhum termo válido na busca (apenas stop words ou números).");
+                return;
+            }
+            System.out.println("Termos considerados: " + String.join(", ", new LinkedHashSet<>(termos)));
+
+            ArquivoPergunta arqPerguntas = new ArquivoPergunta();
+            ArquivoUsuario arqUsuarios = new ArquivoUsuario();
+            List<ElementoLista> resultado = arqPerguntas.buscarPorPalavrasChave(consulta);
+
+            if (resultado.isEmpty()) {
+                System.out.println("\nNenhuma pergunta encontrada para esses termos.");
+                return;
+            }
+
+            int totalPaginas = (resultado.size() + RESULTADOS_POR_PAGINA - 1) / RESULTADOS_POR_PAGINA;
+            int pagina = 0;
+
+            while (true) {
+                int inicio = pagina * RESULTADOS_POR_PAGINA;
+                int fim = Math.min(inicio + RESULTADOS_POR_PAGINA, resultado.size());
+
+                System.out.println("\nResultados — página " + (pagina + 1) + " de " + totalPaginas
+                        + " (" + resultado.size() + " pergunta(s) encontrada(s))");
+                System.out.println("----------------------------------------");
+
+                for (int i = inicio; i < fim; i++) {
+                    ElementoLista e = resultado.get(i);
+                    Pergunta p = arqPerguntas.read(e.getId());
+                    if (p == null)
+                        continue;
+                    Usuario autor = arqUsuarios.read(p.getIdUsuario());
+                    System.out.println("\n(" + (i + 1) + ") " + Formato.dataHora(p.criacao)
+                            + " | Relevância (TF x IDF): " + String.format("%.3f", e.getFrequencia()));
+                    System.out.println(p.pergunta);
+                    System.out.println("Autor: " + (autor != null ? autor.nome : "Desconhecido"));
+                    System.out.println("Palavras-chave: " + p.palavrasChave);
+                }
+
+                System.out.println("\nN - Próxima página | P - Página anterior | R - Voltar");
+                System.out.print("Selecione o número da pergunta ou uma opção: ");
+                String entrada = console.nextLine().trim();
+
+                if (entrada.equalsIgnoreCase("R") || entrada.isEmpty()) {
+                    return;
+                } else if (entrada.equalsIgnoreCase("N")) {
+                    if (pagina < totalPaginas - 1) pagina++;
+                    else System.out.println("Você já está na última página.");
+                } else if (entrada.equalsIgnoreCase("P")) {
+                    if (pagina > 0) pagina--;
+                    else System.out.println("Você já está na primeira página.");
+                } else {
+                    try {
+                        int n = Integer.parseInt(entrada);
+                        if (n > inicio && n <= fim)
+                            exibirDetalhesPergunta(arqPerguntas.read(resultado.get(n - 1).getId()), arqUsuarios);
+                        else
+                            System.out.println("Número inválido.");
+                    } catch (NumberFormatException e) {
+                        System.out.println("Opção inválida.");
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("\nErro ao buscar perguntas por palavras-chave!");
             e.printStackTrace();
         }
     }
