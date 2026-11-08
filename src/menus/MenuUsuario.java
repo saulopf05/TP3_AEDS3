@@ -162,61 +162,7 @@ public class MenuUsuario {
             if (sair || escolha == -1) return;
 
             int idPergunta = mapPerguntas.get(escolha - 1);
-            Pergunta selecionada = arqPerguntas.read(idPergunta);
-
-            if (selecionada == null) {
-                System.out.println("\nPergunta não encontrada.");
-                return;
-            }
-
-            Usuario autorPerg = arqUsuarios.read(selecionada.getIdUsuario());
-
-            System.out.println("\nDetalhes da pergunta");
-            System.out.println("-------------------");
-            System.out.println("Autor: " + (autorPerg != null ? autorPerg.nome : "Desconhecido"));
-            System.out.println("Pergunta: " + selecionada.pergunta);
-            System.out.println("Palavras-chave: " + selecionada.palavrasChave);
-            System.out.println("Nota: " + selecionada.nota);
-            System.out.println("Criada em: " + Formato.dataHora(selecionada.criacao));
-            System.out.println("Alterada em: " + Formato.dataHora(selecionada.alteracao));
-            System.out.println("Status: " + (selecionada.ativa ? "Ativa" : "Arquivada"));
-
-            char opcaoDetalhe;
-            do {
-                System.out.println("\nA - Ver respostas");
-                System.out.println("B - Votar nesta pergunta");
-                System.out.println("R - Retornar");
-                System.out.print("\nOpção: ");
-
-                try {
-                    opcaoDetalhe = console.nextLine().toUpperCase().charAt(0);
-                } catch (Exception e) {
-                    opcaoDetalhe = ' ';
-                }
-
-                switch (opcaoDetalhe) {
-                    case 'A':
-                        try {
-                            MenuResposta menuResposta = new MenuResposta(selecionada, usuario);
-                            menuResposta.menu();
-                        } catch (Exception e) {
-                            System.out.println("\nErro ao acessar o menu de respostas!");
-                            e.printStackTrace();
-                        }
-                        break;
-
-                    case 'B':
-                        votarPergunta(selecionada);
-                        break;
-
-                    case 'R':
-                        break;
-
-                    default:
-                        System.out.println("\nOpção inválida!");
-                        break;
-                }
-            } while (opcaoDetalhe != 'R');
+            exibirDetalhesPergunta(arqPerguntas.read(idPergunta), arqUsuarios);
 
         } catch (NumberFormatException e) {
             System.out.println("\nNúmero inválido! Digite apenas números.");
@@ -224,6 +170,67 @@ public class MenuUsuario {
             System.out.println("\nErro ao buscar perguntas!");
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Tela de detalhes de uma pergunta, com acesso às respostas e à votação.
+     * Usada tanto pela listagem das mais recentes quanto pela busca por
+     * palavras-chave.
+     */
+    private void exibirDetalhesPergunta(Pergunta selecionada, ArquivoUsuario arqUsuarios) throws Exception {
+        if (selecionada == null) {
+            System.out.println("\nPergunta não encontrada.");
+            return;
+        }
+
+        Usuario autorPerg = arqUsuarios.read(selecionada.getIdUsuario());
+
+        System.out.println("\nDetalhes da pergunta");
+        System.out.println("-------------------");
+        System.out.println("Autor: " + (autorPerg != null ? autorPerg.nome : "Desconhecido"));
+        System.out.println("Pergunta: " + selecionada.pergunta);
+        System.out.println("Palavras-chave: " + selecionada.palavrasChave);
+        System.out.println("Nota: " + selecionada.nota);
+        System.out.println("Criada em: " + Formato.dataHora(selecionada.criacao));
+        System.out.println("Alterada em: " + Formato.dataHora(selecionada.alteracao));
+        System.out.println("Status: " + (selecionada.ativa ? "Ativa" : "Arquivada"));
+
+        char opcaoDetalhe;
+        do {
+            System.out.println("\nA - Ver respostas");
+            System.out.println("B - Votar nesta pergunta");
+            System.out.println("R - Retornar");
+            System.out.print("\nOpção: ");
+
+            try {
+                opcaoDetalhe = console.nextLine().toUpperCase().charAt(0);
+            } catch (Exception e) {
+                opcaoDetalhe = ' ';
+            }
+
+            switch (opcaoDetalhe) {
+                case 'A':
+                    try {
+                        MenuResposta menuResposta = new MenuResposta(selecionada, usuario);
+                        menuResposta.menu();
+                    } catch (Exception e) {
+                        System.out.println("\nErro ao acessar o menu de respostas!");
+                        e.printStackTrace();
+                    }
+                    break;
+
+                case 'B':
+                    votarPergunta(selecionada);
+                    break;
+
+                case 'R':
+                    break;
+
+                default:
+                    System.out.println("\nOpção inválida!");
+                    break;
+            }
+        } while (opcaoDetalhe != 'R');
     }
 
     private void minhaArea() {
