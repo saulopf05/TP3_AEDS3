@@ -347,7 +347,7 @@ Continuam disponíveis a listagem paginada das perguntas mais recentes (índice 
 
 > **O trabalho é original e não a cópia de um trabalho de outro grupo?**
 
-*(a ser respondido pelo grupo)*
+**Sim.** O trabalho é original e foi desenvolvido pelo grupo; não é cópia do trabalho de outro grupo.
 
 ### 9.1. Resumo dos testes funcionais
 
