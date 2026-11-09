@@ -2,16 +2,16 @@
 
 Sistema de perguntas e respostas em interface textual, desenvolvido em Java para a disciplina de Algoritmos e Estruturas de Dados III (AEDs III). Este relatório documenta o TP3: a construção do **índice invertido** com as palavras-chave das perguntas e a **busca de perguntas por palavras-chave**, com os resultados classificados pelo modelo **TF×IDF**.
 
+VIDEO DE APRESENTAÇÃO: https://youtu.be/n4wAUw11wJk
 ---
 
 ## 1. Participantes
 
-| Participante |
-|---|
+| Participantes |
 | Lucas José Souza Rodrigues |
 | Luca Maciel |
 | Matheus Mendes Senna |
-| Saulo |
+| Saulo Peixoto|
 
 ---
 
